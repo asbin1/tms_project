@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4"><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Balance Card -->
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Account Balance</h5>
+                        <h2 class="mb-0">${{ balance|floatformat:2 }}</h2>
+                    </div>
+                    <div class="stats-icon text-white-50">
+                        <i class="fas fa-wallet fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-white-50">
+                <a href="{% url 'trade' %}" class="text-white text-decoration-none">
+                    Trade Stocks <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Value Card -->
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Portfolio Value</h5>
+                        <h2 class="mb-0">${{ total_value|floatformat:2 }}</h2>
+                    </div>
+                    <div class="stats-icon text-white-50">
+                        <i class="fas fa-chart-pie fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-white-50">
+                <a href="{% url 'portfolio' %}" class="text-white text-decoration-none">
+                    View Portfolio <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Net Worth Card -->
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Total Net Worth</h5>
+                        <!-- Calculate Net Worth in template or view. Here assuming simple sum -->
+                        <!-- Note: Using simple math in template since we don't have a direct context var for net worth -->
+                        <h2 class="mb-0">${{ balance|add:total_value|floatformat:2 }}</h2>
+                    </div>
+                    <div class="stats-icon text-white-50">
+                        <i class="fas fa-piggy-bank fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Your Portfolio Overview</h5>
+            </div>
+            <div class="card-body">
+                {% if portfolio_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Stock</th>
+                                <th>Quantity</th>
+                                <th>Current Value</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in portfolio_items|slice:":5" %}
+                            <tr>
+                                <td><strong>{{ item.stock.symbol }}</strong> - {{ item.stock.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>${{ item.current_value|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'trade' %}?stock={{ item.stock.symbol }}"
+                                        class="btn btn-sm btn-outline-primary">
+                                        Trade
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if portfolio_items|length > 5 %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'portfolio' %}" class="btn btn-light border">View All Holdings</a>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-center text-muted my-4">You don't own any stocks yet.</p>
+                <div class="text-center">
+                    <a href="{% url 'trade' %}" class="btn btn-trade">Start Trading Now</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

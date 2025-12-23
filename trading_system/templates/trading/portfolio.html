@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}My Portfolio{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4"><i class="fas fa-briefcase"></i> My Portfolio</h2>
+    </div>
+</div>
+
+<!-- Portfolio Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white text-center h-100">
+            <div class="card-body">
+                <h6 class="card-title">Total Invested</h6>
+                <h3>${{ total_invested|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white text-center h-100">
+            <div class="card-body">
+                <h6 class="card-title">Current Value</h6>
+                <h3>${{ total_current|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card {% if total_pl >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white text-center h-100">
+            <div class="card-body">
+                <h6 class="card-title">Total P/L</h6>
+                <h3>
+                    {% if total_pl >= 0 %}+{% endif %}${{ total_pl|floatformat:2 }}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div
+            class="card {% if total_pl_percentage >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white text-center h-100">
+            <div class="card-body">
+                <h6 class="card-title">Return</h6>
+                <h3>
+                    {% if total_pl_percentage >= 0 %}+{% endif %}{{ total_pl_percentage|floatformat:2 }}%
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Holdings Table -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Current Holdings</h5>
+                <a href="{% url 'trade' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Position</a>
+            </div>
+            <div class="card-body">
+                {% if portfolio_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Stock</th>
+                                <th class="text-end">Quantity</th>
+                                <th class="text-end">Avg. Cost</th>
+                                <th class="text-end">Current Price</th>
+                                <th class="text-end">Total Invested</th>
+                                <th class="text-end">Current Value</th>
+                                <th class="text-end">P/L</th>
+                                <th class="text-end">Return</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in portfolio_items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.stock.symbol }}</strong>
+                                    <div class="text-muted small">{{ item.stock.name }}</div>
+                                </td>
+                                <td class="text-end">{{ item.quantity }}</td>
+                                <td class="text-end">${{ item.average_buy_price|floatformat:2 }}</td>
+                                <td class="text-end">${{ item.stock.current_price|floatformat:2 }}</td>
+                                <td class="text-end">${{ item.invested_value|floatformat:2 }}</td>
+                                <td class="text-end fw-bold">${{ item.current_value|floatformat:2 }}</td>
+                                <td
+                                    class="text-end {% if item.profit_loss >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                    {% if item.profit_loss >= 0 %}+{% endif %}${{ item.profit_loss|floatformat:2 }}
+                                </td>
+                                <td
+                                    class="text-end {% if item.profit_loss_percentage >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {% if item.profit_loss_percentage >= 0 %}+{% endif %}{{
+                                    item.profit_loss_percentage|floatformat:2 }}%
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'trade' %}?stock={{ item.stock.symbol }}"
+                                        class="btn btn-sm btn-outline-primary" title="Trade">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search-dollar fa-3x text-muted mb-3"></i>
+                    <h5>Your portfolio is empty</h5>
+                    <p class="text-muted">Start trading to build your portfolio!</p>
+                    <a href="{% url 'trade' %}" class="btn btn-primary mt-2">Go to Trading</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Trade Stocks{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Trading Form -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-exchange-alt"></i> New Trade</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg">Execute Trade</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Overview -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Market Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Company Name</th>
+                                <th>Current Price</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ stock.symbol }}</span></td>
+                                <td>{{ stock.name }}</td>
+                                <td class="positive fw-bold">${{ stock.current_price }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-success trade-btn"
+                                        data-symbol="{{ stock.symbol }}" data-price="{{ stock.current_price }}">
+                                        Select
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">No stocks available for trading.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tradeBtns = document.querySelectorAll('.trade-btn');
+        const stockSelect = document.querySelector('select[name="stock"]'); // Adjust based on actual form field name if different
+
+        tradeBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const symbol = this.dataset.symbol;
+                // Basic auto-selection logic if the form uses a select dropdown
+                // This assumes the select options have values corresponding to stock IDs or symbols
+                // Since we don't know the exact ID, we might need to iterate options text
+                for (let i = 0; i < stockSelect.options.length; i++) {
+                    if (stockSelect.options[i].text.includes(symbol)) {
+                        stockSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
