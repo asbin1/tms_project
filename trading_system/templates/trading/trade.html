@@ -1,93 +1,355 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
 
-{% block title %}Trade Stocks{% endblock %}
+{% block title %}Trade - Trading System{% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Trading Form -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-exchange-alt"></i> New Trade</h5>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="d-grid gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary btn-lg">Execute Trade</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- Left Column - Trading Form -->
+        <div class="col-xl-8">
+            <!-- Trading Card -->
+            <div class="card border-0 mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Order Execution</h5>
+                    <span class="badge-premium bg-primary bg-opacity-10 text-primary">Market Order</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <form method="POST" id="tradeForm">
+                                {% csrf_token %}
 
-    <!-- Market Overview -->
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Market Overview</h5>
+                                <div class="mb-4">
+                                    <label class="text-muted small fw-600 text-uppercase mb-2 d-block">Asset
+                                        Selection</label>
+                                    <div class="premium-select-wrapper">
+                                        {{ form.stock }}
+                                    </div>
+                                    {% if form.stock.errors %}
+                                    <div class="text-danger extra-small mt-1">{{ form.stock.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-6">
+                                        <label class="text-muted small fw-600 text-uppercase mb-2 d-block">Order
+                                            Type</label>
+                                        {{ form.trade_type }}
+                                    </div>
+                                    <div class="col-6">
+                                        <label
+                                            class="text-muted small fw-600 text-uppercase mb-2 d-block">Quantity</label>
+                                        {{ form.quantity }}
+                                    </div>
+                                </div>
+
+                                <div class="card bg-light border-0 rounded-4 mb-4">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted small">Current Price</span>
+                                            <span class="fw-bold" id="currentPrice">Rs. 0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted small">Estimated Value</span>
+                                            <span class="fw-bold text-primary" id="tradeCost">Rs. 0.00</span>
+                                        </div>
+                                        <div class="border-top my-2 opacity-25"></div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted small">Available Buying Power</span>
+                                            <span class="fw-bold">Rs. {{ balance|floatformat:2|intcomma }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-3 shadow-lg">
+                                    Confirm and Execute <i class="fas fa-arrow-right ms-2 small"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="col-md-6 border-start d-none d-md-block">
+                            <label class="text-muted small fw-600 text-uppercase mb-3 px-3 d-block">Active Stock
+                                List</label>
+                            <div class="stock-list-container px-2" style="max-height: 400px; overflow-y: auto;">
+                                {% for stock in stocks %}
+                                <div class="stock-row-premium d-flex justify-content-between align-items-center p-3 mb-2 rounded-3"
+                                    data-stock-id="{{ stock.id }}" data-price="{{ stock.current_price }}"
+                                    data-symbol="{{ stock.symbol }}">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-3"
+                                            style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+                                            {{ stock.symbol|slice:":1" }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold small">{{ stock.symbol }}</div>
+                                            <div class="text-muted extra-small" style="font-size: 0.65rem;">{{ stock.name|truncatechars:18 }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold small text-primary">Rs. {{ stock.current_price|floatformat:2 }}</div>
+                                        <div class="text-success extra-small" style="font-size: 0.65rem;">+1.2%</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Symbol</th>
-                                <th>Company Name</th>
-                                <th>Current Price</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for stock in stocks %}
-                            <tr>
-                                <td><span class="badge bg-secondary">{{ stock.symbol }}</span></td>
-                                <td>{{ stock.name }}</td>
-                                <td class="positive fw-bold">${{ stock.current_price }}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-success trade-btn"
-                                        data-symbol="{{ stock.symbol }}" data-price="{{ stock.current_price }}">
-                                        Select
-                                    </button>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">No stocks available for trading.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+
+            <!-- Order Book (Simulated) -->
+            <!-- Order Book (Simulated) -->
+            <!-- Order Book (Simulated) - Static Data -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book me-2"></i>Market Depth
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success mb-3">
+                                <i class="fas fa-arrow-up me-2"></i>Buy Orders
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Price</th>
+                                            <th>Size</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-success fw-bold">Rs. 101.00</td>
+                                            <td>100</td>
+                                            <td>Rs. 10,100</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success fw-bold">Rs. 102.00</td>
+                                            <td>200</td>
+                                            <td>Rs. 20,400</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success fw-bold">Rs. 103.00</td>
+                                            <td>300</td>
+                                            <td>Rs. 30,900</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success fw-bold">Rs. 104.00</td>
+                                            <td>400</td>
+                                            <td>Rs. 41,600</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success fw-bold">Rs. 105.00</td>
+                                            <td>500</td>
+                                            <td>Rs. 52,500</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-danger mb-3">
+                                <i class="fas fa-arrow-down me-2"></i>Sell Orders
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Price</th>
+                                            <th>Size</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-danger fw-bold">Rs. 106.00</td>
+                                            <td>100</td>
+                                            <td>Rs. 10,600</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-danger fw-bold">Rs. 107.00</td>
+                                            <td>200</td>
+                                            <td>Rs. 21,400</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-danger fw-bold">Rs. 108.00</td>
+                                            <td>300</td>
+                                            <td>Rs. 32,400</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-danger fw-bold">Rs. 109.00</td>
+                                            <td>400</td>
+                                            <td>Rs. 43,600</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-danger fw-bold">Rs. 110.00</td>
+                                            <td>500</td>
+                                            <td>Rs. 55,000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Trading Info -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Trading Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Trading Tips</h6>
+                        <ul class="mb-0 ps-3">
+                            <li>Start with small positions</li>
+                            <li>Use stop-loss orders</li>
+                            <li>Diversify your portfolio</li>
+                            <li>Monitor market trends</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-light border">
+                        <h6><i class="fas fa-calculator me-2"></i>Quick Calculations</h6>
+                        <div class="mb-2">
+                            <small class="text-muted">Balance Available</small>
+                            <div class="fw-bold h5">Rs. {{ balance|floatformat:2|intcomma }}</div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Max Shares (NTC)</small>
+                            <div class="fw-bold">
+                                {% with ntc_price=880.00 %}
+                                {{ balance|div:ntc_price|floatformat:0|intcomma }} shares
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{% endblock %}
+<style>
+    .stock-row-premium {
+        background: var(--bg-body);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-{% block extra_js %}
+    .stock-row-premium:hover {
+        background: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .stock-row-premium.active {
+        background: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    }
+
+    .premium-select-wrapper select,
+    #id_trade_type,
+    #id_quantity {
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        font-weight: 500;
+        background-color: var(--bg-body);
+    }
+
+    .premium-select-wrapper select:focus,
+    #id_trade_type:focus,
+    #id_quantity:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        background-color: white;
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const tradeBtns = document.querySelectorAll('.trade-btn');
-        const stockSelect = document.querySelector('select[name="stock"]'); // Adjust based on actual form field name if different
+        const stockSelect = document.getElementById('id_stock');
+        const quantityInput = document.getElementById('id_quantity');
+        const tradeTypeSelect = document.getElementById('id_trade_type');
+        const currentPriceLabel = document.getElementById('currentPrice');
+        const tradeCostLabel = document.getElementById('tradeCost');
+        const balance = parseFloat('{{ balance }}');
 
-        tradeBtns.forEach(btn => {
-            btn.addEventListener('click', function () {
-                const symbol = this.dataset.symbol;
-                // Basic auto-selection logic if the form uses a select dropdown
-                // This assumes the select options have values corresponding to stock IDs or symbols
-                // Since we don't know the exact ID, we might need to iterate options text
-                for (let i = 0; i < stockSelect.options.length; i++) {
-                    if (stockSelect.options[i].text.includes(symbol)) {
-                        stockSelect.selectedIndex = i;
-                        break;
-                    }
-                }
+        // Stock selection from visual list
+        document.querySelectorAll('.stock-row-premium').forEach(row => {
+            row.addEventListener('click', function () {
+                const stockId = this.dataset.stockId;
+                const price = parseFloat(this.dataset.price);
+
+                // Update select element
+                stockSelect.value = stockId;
+
+                // Update visual state
+                document.querySelectorAll('.stock-row-premium').forEach(r => r.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update UI
+                currentPriceLabel.textContent = `Rs. ${price.toFixed(2)}`;
+                updateTradeCost();
             });
+        });
+
+        function updateTradeCost() {
+            const priceText = currentPriceLabel.textContent.replace('Rs. ', '');
+            const price = parseFloat(priceText) || 0;
+            const quantity = parseInt(quantityInput.value) || 0;
+            const tradeType = tradeTypeSelect.value;
+            const cost = price * quantity;
+
+            if (cost > 0) {
+                tradeCostLabel.textContent = `Rs. ${cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+                if (tradeType === 'BUY' && cost > balance) {
+                    tradeCostLabel.classList.add('negative-value');
+                } else {
+                    tradeCostLabel.classList.remove('negative-value');
+                }
+            } else {
+                tradeCostLabel.textContent = 'Rs. 0.00';
+            }
+        }
+
+        [quantityInput, tradeTypeSelect].forEach(el => {
+            el?.addEventListener('input', updateTradeCost);
+            el?.addEventListener('change', updateTradeCost);
+        });
+
+        // Sync visual list with select dropdown (if changed manually)
+        stockSelect.addEventListener('change', function () {
+            const row = document.querySelector(`.stock-row-premium[data-stock-id="${this.value}"]`);
+            if (row) row.click();
+        });
+
+        // Initial selection
+        const initialStockId = stockSelect.value;
+        const initialRow = document.querySelector(`.stock-row-premium[data-stock-id="${initialStockId}"]`) || document.querySelector('.stock-row-premium');
+        if (initialRow) initialRow.click();
+
+        // Form feedback
+        document.getElementById('tradeForm').addEventListener('submit', function (e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Executing...';
+            submitBtn.disabled = true;
         });
     });
 </script>
+
 {% endblock %}

@@ -7,7 +7,7 @@ class LoginRequiredMiddleware:
 
     def __call__(self, request):
         # Define URLs that don't require authentication
-        open_urls = [reverse('login'), reverse('register'), reverse('logout')]
+        open_urls = [reverse('login'), reverse('register'), reverse('logout'), reverse('root')]
         
         # Check if user is authenticated for protected URLs
         if not request.user.is_authenticated and request.path not in open_urls and not request.path.startswith('/admin/'):

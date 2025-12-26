@@ -29,9 +29,13 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(template_name='accounts/logout.html'), name='logout'),
     
     # Trading URLs
-    path('', trading_views.dashboard, name='dashboard'),
+    path('', account_views.user_login, name='root'),
+    path('dashboard/', trading_views.dashboard, name='dashboard'),
     path('trade/', trading_views.trade_view, name='trade'),
     path('portfolio/', trading_views.portfolio_view, name='portfolio'),
     path('analytics/', trading_views.analytics_view, name='analytics'),
+
+    # API endpoints
+    path('api/quick-trade/', trading_views.quick_trade, name='quick_trade'),
 ]
 

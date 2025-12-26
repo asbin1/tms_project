@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import UserRegisterForm, UserUpdateForm
@@ -29,5 +29,6 @@ def user_login(request):
                 messages.success(request, f'Welcome back, {username}!')
                 return redirect('dashboard')
     else:
+        logout(request)
         form = AuthenticationForm()
     return render(request, 'accounts/login.html', {'form': form})

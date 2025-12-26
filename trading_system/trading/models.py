@@ -5,10 +5,21 @@ class Stock(models.Model):
     symbol = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)
     current_price = models.DecimalField(max_digits=10, decimal_places=2)
+    previous_close = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     last_updated = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return f"{self.symbol} - {self.name}"
+
+    @property
+    def todays_change(self):
+        return self.current_price - self.previous_close
+    
+    @property
+    def todays_change_percentage(self):
+        if self.previous_close > 0:
+            return (self.todays_change / self.previous_close) * 100
+        return 0
 
 class Trade(models.Model):
     TRADE_TYPES = [
@@ -60,4 +71,12 @@ class Portfolio(models.Model):
         if self.invested_value > 0:
             return (self.profit_loss / self.invested_value) * 100
         return 0
+    
+    @property
+    def todays_change(self):
+        return self.stock.todays_change * self.quantity
+    
+    @property
+    def todays_change_percentage(self):
+        return self.stock.todays_change_percentage
         

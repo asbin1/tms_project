@@ -1,127 +1,618 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard - Trading System{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <h2 class="mb-4"><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <!-- Balance Card -->
-    <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card bg-primary text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Account Balance</h5>
-                        <h2 class="mb-0">${{ balance|floatformat:2 }}</h2>
-                    </div>
-                    <div class="stats-icon text-white-50">
-                        <i class="fas fa-wallet fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-white-50">
-                <a href="{% url 'trade' %}" class="text-white text-decoration-none">
-                    Trade Stocks <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Portfolio Value Card -->
-    <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card bg-success text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Portfolio Value</h5>
-                        <h2 class="mb-0">${{ total_value|floatformat:2 }}</h2>
-                    </div>
-                    <div class="stats-icon text-white-50">
-                        <i class="fas fa-chart-pie fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-white-50">
-                <a href="{% url 'portfolio' %}" class="text-white text-decoration-none">
-                    View Portfolio <i class="fas fa-arrow-circle-right"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Net Worth Card -->
-    <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card bg-info text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title">Total Net Worth</h5>
-                        <!-- Calculate Net Worth in template or view. Here assuming simple sum -->
-                        <!-- Note: Using simple math in template since we don't have a direct context var for net worth -->
-                        <h2 class="mb-0">${{ balance|add:total_value|floatformat:2 }}</h2>
-                    </div>
-                    <div class="stats-icon text-white-50">
-                        <i class="fas fa-piggy-bank fa-2x"></i>
+<div class="container-fluid py-4">
+    <!-- Stats Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100">
+                <div class="card-body dashboard-stat-card d-flex flex-column justify-content-center">
+                    <div class="text-muted small fw-600 text-uppercase mb-2">Portfolio Value</div>
+                    <h3 class="mb-1">Rs. {{ total_current|floatformat:2|intcomma }}</h3>
+                    <div class="{% if total_profit_loss >= 0 %}positive-value{% else %}negative-value{% endif %} small">
+                        <i class="fas fa-trending-{% if total_profit_loss >= 0 %}up{% else %}down{% endif %} me-1"></i>
+                        {{ total_profit_loss_percentage|floatformat:2 }}%
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="fas fa-list"></i> Your Portfolio Overview</h5>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100">
+                <div class="card-body dashboard-stat-card d-flex flex-column justify-content-center">
+                    <div class="text-muted small fw-600 text-uppercase mb-2">Available Balance</div>
+                    <h3 class="mb-1">Rs. {{ balance|floatformat:2|intcomma }}</h3>
+                    <div class="text-muted small">Ready to invest</div>
+                </div>
             </div>
-            <div class="card-body">
-                {% if portfolio_items %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Stock</th>
-                                <th>Quantity</th>
-                                <th>Current Value</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in portfolio_items|slice:":5" %}
-                            <tr>
-                                <td><strong>{{ item.stock.symbol }}</strong> - {{ item.stock.name }}</td>
-                                <td>{{ item.quantity }}</td>
-                                <td>${{ item.current_value|floatformat:2 }}</td>
-                                <td>
-                                    <a href="{% url 'trade' %}?stock={{ item.stock.symbol }}"
-                                        class="btn btn-sm btn-outline-primary">
-                                        Trade
-                                    </a>
-                                </td>
-                            </tr>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100">
+                <div class="card-body dashboard-stat-card d-flex flex-column justify-content-center">
+                    <div class="text-muted small fw-600 text-uppercase mb-2">Total Invested</div>
+                    <h3 class="mb-1">Rs. {{ total_invested|floatformat:2|intcomma }}</h3>
+                    <div class="text-muted small">{{ portfolio_items.count }} Active Positions</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100">
+                <div class="card-body dashboard-stat-card d-flex flex-column justify-content-center">
+                    <div class="text-muted small fw-600 text-uppercase mb-2">Today's P/L</div>
+                    <h3 class="mb-1 {% if todays_pl >= 0 %}positive-value{% else %}negative-value{% endif %}">
+                        Rs. {{ todays_pl|floatformat:2|intcomma }}
+                    </h3>
+                    <div
+                        class="small fw-600 {% if todays_pl >= 0 %}text-success{% else %}text-danger{% endif %} text-opacity-75">
+                        Live Market Data</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Portfolio Overview -->
+        <div class="col-xl-8">
+            <div class="card border-0 h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Portfolio</h5>
+                    <a href="{% url 'portfolio' %}" class="btn btn-outline-primary btn-sm px-3">
+                        Full View <i class="fas fa-chevron-right ms-1 small"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if portfolio_items %}
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th class="text-end">Shares</th>
+                                    <th class="text-end">Avg. Cost</th>
+                                    <th class="text-end">Market Price</th>
+                                    <th class="text-end">Total P/L</th>
+                                    <th class="text-center">Trade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in portfolio_items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3"
+                                                style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                                <span class="fw-bold small">{{ item.stock.symbol|slice:":1" }}</span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ item.stock.symbol }}</div>
+                                                <div class="text-muted small">{{ item.stock.name|truncatechars:15 }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-end fw-500">{{ item.quantity|intcomma }}</td>
+                                    <td class="text-end text-muted">Rs. {{ item.average_buy_price|floatformat:2 }}</td>
+                                    <td class="text-end">
+                                        <div class="fw-bold">Rs. {{ item.stock.current_price|floatformat:2 }}</div>
+                                        <div class="{% if item.todays_change >= 0 %}positive-value{% else %}negative-value{% endif %} extra-small"
+                                            style="font-size: 0.7rem;">
+                                            {{ item.todays_change_percentage|floatformat:2 }}%
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div
+                                            class="{% if item.profit_loss >= 0 %}positive-value{% else %}negative-value{% endif %} fw-bold">
+                                            Rs. {{ item.profit_loss|floatformat:2|intcomma }}
+                                        </div>
+                                        <div class="extra-small text-muted" style="font-size: 0.7rem;">
+                                            {{ item.profit_loss_percentage|floatformat:2 }}%
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm rounded-circle"
+                                                data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v text-muted"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item btn-quick-buy" href="#"
+                                                        data-stock-id="{{ item.stock.id }}"
+                                                        data-stock-symbol="{{ item.stock.symbol }}"
+                                                        data-stock-price="{{ item.stock.current_price }}"><i
+                                                            class="fas fa-plus-circle text-success me-2"></i> Buy
+                                                        More</a></li>
+                                                <li><a class="dropdown-item btn-quick-sell" href="#"
+                                                        data-stock-id="{{ item.stock.id }}"
+                                                        data-stock-symbol="{{ item.stock.symbol }}"
+                                                        data-stock-price="{{ item.stock.current_price }}"
+                                                        data-max-quantity="{{ item.quantity }}"><i
+                                                            class="fas fa-minus-circle text-danger me-2"></i> Sell
+                                                        Content</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <img src="{% static 'images/empty-state.svg' %}" class="mb-4"
+                            style="width: 150px; opacity: 0.5;" alt="Empty">
+                        <h5 class="text-muted">No investments yet</h5>
+                        <p class="text-muted mb-4">Start trading to build your portfolio!</p>
+                        <a href="{% url 'trade' %}" class="btn btn-primary px-5">Start Trading</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Trade & Market Data -->
+        <div class="col-xl-4">
+            <!-- Quick Trade Card -->
+            <div class="card border-0 mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Trade</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Stock</label>
+                        <select class="form-select" id="quickStockSelect">
+                            <option value="">Choose a stock...</option>
+                            {% for stock in all_stocks %}
+                            <option value="{{ stock.id }}" data-price="{{ stock.current_price }}"
+                                data-symbol="{{ stock.symbol }}">
+                                {{ stock.symbol }} - {{ stock.name|truncatechars:20 }} (Rs. {{ stock.current_price|floatformat:2 }})
+                            </option>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Action</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="quickAction" id="quickBuy" value="BUY" checked>
+                            <label class="btn btn-outline-success w-50" for="quickBuy">
+                                <i class="fas fa-arrow-up me-2"></i>Buy
+                            </label>
+
+                            <input type="radio" class="btn-check" name="quickAction" id="quickSell" value="SELL">
+                            <label class="btn btn-outline-danger w-50" for="quickSell">
+                                <i class="fas fa-arrow-down me-2"></i>Sell
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quantity</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" id="decreaseQty">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" id="quickQuantity" value="1" min="1">
+                            <button class="btn btn-outline-secondary" type="button" id="increaseQty">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Price per Share</span>
+                            <span class="fw-bold" id="stockPrice">Rs. 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Estimated {% if request.GET.action == 'sell' %}Proceeds{% else %}Cost{% endif %}</span>
+                            <span class="fw-bold" id="estimatedCost">Rs. 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Available Balance</span>
+                            <span class="fw-bold balance-display">Rs. {{ balance|floatformat:2|intcomma }}</span>
+                        </div>
+                        <div class="mt-2" id="balanceWarning" style="display: none;">
+                            <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Insufficient
+                                balance</small>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 py-2" id="executeQuickTrade" disabled>
+                        <i class="fas fa-paper-plane me-2"></i>Execute Trade
+                    </button>
                 </div>
-                {% if portfolio_items|length > 5 %}
-                <div class="text-center mt-3">
-                    <a href="{% url 'portfolio' %}" class="btn btn-light border">View All Holdings</a>
+            </div>
+
+            <!-- Recent Trades -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Activity
+                    </h5>
                 </div>
-                {% endif %}
-                {% else %}
-                <p class="text-center text-muted my-4">You don't own any stocks yet.</p>
-                <div class="text-center">
-                    <a href="{% url 'trade' %}" class="btn btn-trade">Start Trading Now</a>
+                <div class="card-body">
+                    {% if recent_trades %}
+                    <div class="list-group list-group-flush">
+                        {% for trade in recent_trades %}
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span
+                                        class="badge bg-{% if trade.trade_type == 'BUY' %}success{% else %}danger{% endif %} me-2">
+                                        {{ trade.trade_type }}
+                                    </span>
+                                    <strong>{{ trade.stock.symbol }}</strong>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">Rs. {{ trade.total_value|floatformat:2|intcomma }}</div>
+                                    <small class="text-muted">{{ trade.timestamp|timesince }} ago</small>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted">{{ trade.quantity|intcomma }} shares @ Rs. {{ trade.price|floatformat:2 }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <p class="text-muted mb-0">No recent trades</p>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Quick Trade Modal -->
+<div class="modal fade" id="quickTradeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Trade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="tradeDetails"></div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Market orders are executed immediately at the current price.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmQuickTrade">Confirm Trade</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+    .symbol-container {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        transform: translateY(-1px);
+        transition: all 0.2s;
+    }
+
+    .btn-quick-buy:hover,
+    .btn-quick-sell:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+        // Quick Trade Elements
+        const quickStockSelect = document.getElementById('quickStockSelect');
+        const quickQuantity = document.getElementById('quickQuantity');
+        const stockPrice = document.getElementById('stockPrice');
+        const estimatedCost = document.getElementById('estimatedCost');
+        const executeBtn = document.getElementById('executeQuickTrade');
+        const balanceWarning = document.getElementById('balanceWarning');
+
+        // State variables
+        let selectedStockId = null;
+        let selectedStockPrice = 0;
+        let selectedStockSymbol = '';
+        let userBalance = parseFloat('{{ balance }}') || 0;
+
+        // Update when stock is selected
+        quickStockSelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            selectedStockId = this.value;
+
+            if (selectedStockId) {
+                selectedStockPrice = parseFloat(selectedOption.dataset.price) || 0;
+                selectedStockSymbol = selectedOption.dataset.symbol || selectedOption.text.split(' - ')[0];
+                stockPrice.textContent = `Rs. ${selectedStockPrice.toFixed(2)}`;
+            } else {
+                selectedStockPrice = 0;
+                selectedStockSymbol = '';
+                stockPrice.textContent = 'Rs. 0.00';
+            }
+
+            updateEstimatedCost();
+        });
+
+        // Update estimated cost when quantity changes
+        quickQuantity.addEventListener('input', updateEstimatedCost);
+        quickQuantity.addEventListener('change', updateEstimatedCost);
+
+        // Quantity buttons
+        document.getElementById('increaseQty').addEventListener('click', function () {
+            const currentValue = parseInt(quickQuantity.value) || 1;
+            quickQuantity.value = currentValue + 1;
+            updateEstimatedCost();
+        });
+
+        document.getElementById('decreaseQty').addEventListener('click', function () {
+            const currentValue = parseInt(quickQuantity.value) || 2;
+            if (currentValue > 1) {
+                quickQuantity.value = currentValue - 1;
+                updateEstimatedCost();
+            }
+        });
+
+        // Update estimated cost
+        function updateEstimatedCost() {
+            const quantity = parseInt(quickQuantity.value) || 1;
+            const action = document.querySelector('input[name="quickAction"]:checked').value;
+            const cost = quantity * selectedStockPrice;
+
+            if (selectedStockId && quantity > 0) {
+                estimatedCost.textContent = `Rs. ${cost.toFixed(2)}`;
+
+                // Check balance for buy orders
+                if (action === 'BUY' && cost > userBalance) {
+                    estimatedCost.classList.add('text-danger');
+                    balanceWarning.style.display = 'block';
+                    executeBtn.disabled = true;
+                } else {
+                    estimatedCost.classList.remove('text-danger');
+                    balanceWarning.style.display = 'none';
+                    executeBtn.disabled = false;
+                }
+            } else {
+                estimatedCost.textContent = 'Rs. 0.00';
+                executeBtn.disabled = true;
+            }
+        }
+
+        // Update execute button state based on all conditions
+        function updateExecuteButton() {
+            const quantity = parseInt(quickQuantity.value) || 0;
+            const action = document.querySelector('input[name="quickAction"]:checked').value;
+            const cost = quantity * selectedStockPrice;
+
+            executeBtn.disabled = !selectedStockId ||
+                quantity < 1 ||
+                (action === 'BUY' && cost > userBalance);
+        }
+
+        // Execute quick trade button click
+        executeBtn.addEventListener('click', function () {
+            const action = document.querySelector('input[name="quickAction"]:checked').value;
+            const quantity = parseInt(quickQuantity.value) || 1;
+            const totalCost = quantity * selectedStockPrice;
+
+            // Show confirmation modal
+            const modal = new bootstrap.Modal(document.getElementById('quickTradeModal'));
+            const tradeDetails = document.getElementById('tradeDetails');
+
+            tradeDetails.innerHTML = `
+                <div class="text-center mb-3">
+                    <div class="display-6 mb-2 ${action === 'BUY' ? 'text-success' : 'text-danger'}">
+                        ${action === 'BUY' ? 'BUY ORDER' : 'SELL ORDER'}
+                    </div>
+                    <h4 class="mb-3">${selectedStockSymbol}</h4>
+                </div>
+                
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <small class="text-muted">Quantity</small>
+                                <div class="fw-bold h5">${quantity} shares</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Price per Share</small>
+                                <div class="fw-bold h5">Rs. ${selectedStockPrice.toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <small class="text-muted">Total ${action === 'BUY' ? 'Cost' : 'Proceeds'}</small>
+                            <div class="fw-bold h3 ${action === 'BUY' ? 'text-success' : 'text-danger'}">
+                                Rs. ${totalCost.toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.show();
+        });
+
+        // Confirm quick trade
+        document.getElementById('confirmQuickTrade').addEventListener('click', function () {
+            const action = document.querySelector('input[name="quickAction"]:checked').value;
+            const quantity = parseInt(quickQuantity.value);
+
+            if (!selectedStockId || quantity < 1) {
+                showNotification('Invalid trade parameters', 'danger');
+                return;
+            }
+
+            // Show loading state
+            const confirmBtn = document.getElementById('confirmQuickTrade');
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            confirmBtn.disabled = true;
+
+            fetch('{% url "quick_trade" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    stock_id: selectedStockId,
+                    trade_type: action,
+                    quantity: quantity,
+                    price: selectedStockPrice
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('quickTradeModal'));
+                    if (modal) modal.hide();
+
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+
+                        // Update balance display
+                        if (data.new_balance) {
+                            userBalance = parseFloat(data.new_balance);
+                            document.querySelectorAll('.balance-display').forEach(el => {
+                                el.textContent = `Rs. ${userBalance.toFixed(2)}`;
+                            });
+                        }
+
+                        // Reload after 2 seconds
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        showNotification(data.error || 'Trade failed', 'danger');
+                        confirmBtn.innerHTML = originalText;
+                        confirmBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error executing trade. Please try again.', 'danger');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('quickTradeModal'));
+                    if (modal) modal.hide();
+                    confirmBtn.innerHTML = originalText;
+                    confirmBtn.disabled = false;
+                });
+        });
+
+        // Portfolio quick buy buttons
+        document.querySelectorAll('.btn-quick-buy').forEach(button => {
+            button.addEventListener('click', function () {
+                const stockId = this.dataset.stockId;
+                const stockSymbol = this.dataset.stockSymbol;
+                const stockPrice = this.dataset.stockPrice;
+
+                // Set values in quick trade form
+                quickStockSelect.value = stockId;
+
+                // Trigger change event to update price
+                const event = new Event('change');
+                quickStockSelect.dispatchEvent(event);
+
+                // Set to buy
+                document.getElementById('quickBuy').checked = true;
+                document.querySelectorAll('input[name="quickAction"]').forEach(r => r.dispatchEvent(new Event('change')));
+
+                // Scroll to quick trade
+                document.querySelector('.card.border-0.shadow-sm.mb-4').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            });
+        });
+
+        // Portfolio quick sell buttons
+        document.querySelectorAll('.btn-quick-sell').forEach(button => {
+            button.addEventListener('click', function () {
+                const stockId = this.dataset.stockId;
+                const stockSymbol = this.dataset.stockSymbol;
+                const stockPrice = this.dataset.stockPrice;
+                const maxQuantity = parseInt(this.dataset.maxQuantity) || 1;
+
+                // Set values in quick trade form
+                quickStockSelect.value = stockId;
+
+                // Trigger change event to update price
+                const event = new Event('change');
+                quickStockSelect.dispatchEvent(event);
+
+                // Set to sell
+                document.getElementById('quickSell').checked = true;
+                document.querySelectorAll('input[name="quickAction"]').forEach(r => r.dispatchEvent(new Event('change')));
+
+                // Set quantity to max available
+                quickQuantity.value = maxQuantity;
+                updateEstimatedCost();
+
+                // Scroll to quick trade
+                document.querySelector('.card.border-0.shadow-sm.mb-4').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            });
+        });
+
+        // Update estimated cost when action changes
+        document.querySelectorAll('input[name="quickAction"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                updateEstimatedCost();
+            });
+        });
+
+        // Notification function
+        function showNotification(message, type) {
+            // Remove existing notifications
+            document.querySelectorAll('.alert-notification').forEach(el => el.remove());
+
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-notification alert-dismissible fade show position-fixed`;
+            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    <div>${message}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Initialize button state
+        updateExecuteButton();
+    });
+</script>
 {% endblock %}

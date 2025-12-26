@@ -17,4 +17,4 @@ class TradeForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['stock'].label_from_instance = lambda obj: f"{obj.symbol} - {obj.name} (${obj.current_price})"
+        self.fields['stock'].label_from_instance = lambda obj: f"{obj.symbol} - {obj.name} (Rs.{obj.current_price})"

@@ -4,50 +4,69 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="text-center mb-0"><i class="fas fa-user-plus"></i> Create Trading Account</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5><i class="fas fa-gift text-primary"></i> Start with $10,000</h5>
-                                <p class="text-muted">Every new account begins with a $10,000 virtual balance to start trading.</p>
-                            </div>
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-xl-10 col-lg-11">
+        <div class="card border-0 overflow-hidden shadow-lg rounded-5">
+            <div class="row g-0">
+                <div class="col-lg-5 bg-primary bg-opacity-10 p-5 d-none d-lg-flex flex-column justify-content-center">
+                    <div class="mb-5">
+                        <h2 class="fw-bold text-primary mb-3">Join the Future of Trading</h2>
+                        <p class="text-muted">Master the markets with our high-performance trading terminal.</p>
+                    </div>
+
+                    <div class="mb-4 d-flex align-items-start">
+                        <div class="bg-white rounded-circle p-3 shadow-sm me-3 text-primary">
+                            <i class="fas fa-coins"></i>
                         </div>
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5><i class="fas fa-chart-line text-success"></i> Real-time Trading</h5>
-                                <p class="text-muted">Experience realistic stock trading with live market simulation.</p>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5><i class="fas fa-shield-alt text-warning"></i> Secure & Private</h5>
-                                <p class="text-muted">Your data is protected with industry-standard security measures.</p>
-                            </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Rs. 10,000 Welcome Bonus</h6>
+                            <p class="text-muted small mb-0">Start your journey with virtual capital provided by us.</p>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <form method="POST">
-                            {% csrf_token %}
-                            {{ form|crispy }}
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success btn-lg mt-3">
-                                    <i class="fas fa-user-check"></i> Create Account
-                                </button>
-                            </div>
-                        </form>
-                        <div class="text-center mt-4">
-                            <p class="mb-0">Already have an account?</p>
-                            <a href="{% url 'login' %}" class="btn btn-outline-secondary mt-2">
-                                <i class="fas fa-sign-in-alt"></i> Login Here
-                            </a>
+
+                    <div class="mb-4 d-flex align-items-start">
+                        <div class="bg-white rounded-circle p-3 shadow-sm me-3 text-success">
+                            <i class="fas fa-chart-line"></i>
                         </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Real-time Simulation</h6>
+                            <p class="text-muted small mb-0">Experience live market dynamics without any financial risk.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start">
+                        <div class="bg-white rounded-circle p-3 shadow-sm me-3 text-warning">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Secure Architecture</h6>
+                            <p class="text-muted small mb-0">Your trading strategies and data are protected by top-tier
+                                security.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7 p-5">
+                    <div class="mb-5">
+                        <h3 class="fw-bold">Create Trading Terminal Account</h3>
+                        <p class="text-muted small">Fill in the details below to initialize your terminal access</p>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="premium-form-group mb-4">
+                            {{ form|crispy }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-3 shadow-lg rounded-3">
+                            Initialize Account <i class="fas fa-user-check ms-2 small"></i>
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-5 pt-3 border-top">
+                        <p class="text-muted small mb-2">Already part of the network?</p>
+                        <a href="{% url 'login' %}" class="fw-bold text-decoration-none">
+                            Login to Existing Terminal <i class="fas fa-sign-in-alt ms-1 small"></i>
+                        </a>
                     </div>
                 </div>
             </div>
